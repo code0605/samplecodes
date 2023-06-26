@@ -1,0 +1,37 @@
+import org.jfrog.artifactory.client.Artifactory;
+import org.jfrog.artifactory.client.ArtifactoryClient;
+import org.jfrog.artifactory.client.model.SearchResults;
+import org.jfrog.artifactory.client.model.User;
+
+import java.util.List;
+
+public class ArtifactoryUserSearch {
+    public static void main(String[] args) {
+        String artifactoryUrl = "https://your-artifactory-url.com";
+        String apiKey = "your-api-key";
+        String searchTerm = "your-search-term";
+
+        // Create the Artifactory connection using API key
+        Artifactory artifactory = ArtifactoryClient.create(artifactoryUrl).setApiKey(apiKey);
+
+        try {
+            // Search for users
+            SearchResults<User> searchResults = artifactory.security().searchUsers(searchTerm);
+            List<User> users = searchResults.getResults();
+
+            // Print the user details
+            for (User user : users) {
+                System.out.println("Username: " + user.getUsername());
+                // Access other user properties as needed
+            }
+        } catch (Exception e) {
+            // Handle any exceptions that occur
+            e.printStackTrace();
+        } finally {
+            // Close the Artifactory connection
+            if (artifactory != null) {
+                artifactory.close();
+            }
+        }
+    }
+}
