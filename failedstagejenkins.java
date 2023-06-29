@@ -1,3 +1,8 @@
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -21,10 +26,7 @@ public class JenkinsPipelineStatus {
                 scanner.close();
 
                 // Parse the JSON response
-                // Assuming you are using a JSON parsing library like Jackson or Gson
-                // Extract the failed stage name from the parsed JSON response
                 String failedStage = extractFailedStage(jsonResponse);
-                
                 System.out.println("Failed Stage: " + failedStage);
             } else {
                 System.out.println("Failed to retrieve pipeline status. Response code: " + responseCode);
@@ -37,9 +39,20 @@ public class JenkinsPipelineStatus {
     }
 
     private static String extractFailedStage(String jsonResponse) {
-        // Parse the JSON response and extract the failed stage name
-        // Implement your logic here based on the JSON structure returned by Jenkins API
-        // Return the failed stage name
-        return "Failed Stage Name";
+        Gson gson = new Gson();
+        JsonObject root = gson.fromJson(jsonResponse, JsonObject.class);
+        JsonArray stages = root.getAsJsonArray("stages");
+
+        for (JsonElement stageElement : stages) {
+            JsonObject stage = stageElement.getAsJsonObject();
+            String status = stage.get("status").getAsString();
+
+            if (status.equals("FAILED")) {
+                String stageName = stage.get("name").getAsString();
+                return stageName;
+            }
+        }
+
+        return "Failed Stage Name not found";
     }
 }
