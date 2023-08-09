@@ -1,11 +1,14 @@
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
+import com.atlassian.jira.rest.client.api.SearchRestClient;
+import com.atlassian.jira.rest.client.api.domain.BasicIssue;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.atlassian.jira.rest.client.api.domain.Status;
+import com.atlassian.jira.rest.client.api.domain.SearchResult;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
-import com.atlassian.util.concurrent.Promise;
+import io.atlassian.fugue.Supplier;
 
 import java.net.URI;
+import java.util.concurrent.ExecutionException;
 
 public class JiraApiExample {
     public static void main(String[] args) {
@@ -18,26 +21,26 @@ public class JiraApiExample {
         URI serverUri = URI.create(jiraUrl);
         JiraRestClient restClient = factory.createWithBasicHttpAuthentication(serverUri, username, password);
 
-        String jql = "summary ~ \"" + summary + "\" AND status = \"Open\"";
+        SearchRestClient searchClient = restClient.getSearchClient();
+        Supplier<SearchResult> searchResultSupplier = searchClient.searchJql(jql, 100, 0, null);
 
         try {
-            Promise<Iterable<Issue>> searchJqlPromise = restClient.getSearchClient().searchJql(jql, 100, 0, null);
-            Iterable<Issue> issues = searchJqlPromise.claim();
-
-            for (Issue issue : issues) {
+            SearchResult searchResult = searchResultSupplier.get();
+            for (BasicIssue basicIssue : searchResult.getIssues()) {
+                Issue issue = restClient.getIssueClient().getIssue(basicIssue.getKey()).get();
                 System.out.println("Issue Key: " + issue.getKey());
                 System.out.println("Summary: " + issue.getSummary());
-                Status status = issue.getStatus();
-                System.out.println("Status: " + status.getName());
+                System.out.println("Status: " + issue.getStatus().getName());
                 System.out.println("-".repeat(50));
             }
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         } finally {
             restClient.close();
         }
     }
 }
+
 
 
 //dependencies {
