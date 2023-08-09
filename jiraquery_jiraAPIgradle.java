@@ -45,4 +45,5 @@ public class JiraApiExample {
 
 //    implementation group: 'com.atlassian.jira', name: 'jira-rest-java-client-core', version: '5.2.0' // Use the latest version
 //    implementation group: 'com.atlassian.jira', name: 'jira-rest-java-client-plugin', version: '5.2.0' // Use the same version as above
+//    implementation group: 'com.atlassian.util.concurrent', name: 'atlassian-util-concurrent', version: '2.4.1'
 //}
