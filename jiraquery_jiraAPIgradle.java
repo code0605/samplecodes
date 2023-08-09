@@ -5,7 +5,6 @@ import com.atlassian.jira.rest.client.api.domain.BasicIssue;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.api.domain.SearchResult;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
-import io.atlassian.fugue.Supplier;
 
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
@@ -22,12 +21,12 @@ public class JiraApiExample {
         JiraRestClient restClient = factory.createWithBasicHttpAuthentication(serverUri, username, password);
 
         SearchRestClient searchClient = restClient.getSearchClient();
-        Supplier<SearchResult> searchResultSupplier = searchClient.searchJql(jql, 100, 0, null);
+        String jql = "summary ~ \"" + summary + "\" AND status = \"Open\"";
 
         try {
-            SearchResult searchResult = searchResultSupplier.get();
+            SearchResult searchResult = searchClient.searchJql(jql, 100, 0, null).claim();
             for (BasicIssue basicIssue : searchResult.getIssues()) {
-                Issue issue = restClient.getIssueClient().getIssue(basicIssue.getKey()).get();
+                Issue issue = restClient.getIssueClient().getIssue(basicIssue.getKey()).claim();
                 System.out.println("Issue Key: " + issue.getKey());
                 System.out.println("Summary: " + issue.getSummary());
                 System.out.println("Status: " + issue.getStatus().getName());
@@ -40,6 +39,7 @@ public class JiraApiExample {
         }
     }
 }
+
 
 
 
