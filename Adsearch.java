@@ -1,48 +1,53 @@
-import java.util.Iterator;
-import org.apache.commons.lang3.ArrayUtils;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
-import com.jacob.com.SafeArray;
 import com.jacob.com.Variant;
 
-public class OutlookEmailAddressRetriever {
+public class LocalOutlookContactSearch {
     public static void main(String[] args) {
+        // Create an Outlook Application instance
+        ActiveXComponent outlookApp = new ActiveXComponent("Outlook.Application");
+
         try {
-            // Initialize Outlook Application
-            ActiveXComponent outlook = new ActiveXComponent("Outlook.Application");
-            Dispatch namespace = Dispatch.get(outlook, "GetNamespace").invoke("MAPI");
+            // Get the NameSpace
+            Dispatch namespace = Dispatch.get(outlookApp, "GetNamespace", "MAPI").toDispatch();
 
-            // Get the Inbox folder
-            Dispatch inbox = Dispatch.get(namespace, "GetDefaultFolder").invoke(6);
+            // Specify the contact's name to search for
+            String contactName = "John Doe"; // Replace with the contact's name
 
-            // Get the items (emails) in the Inbox
-            Dispatch items = Dispatch.get(inbox, "Items");
+            // Get the Contacts folder
+            Dispatch contactsFolder = Dispatch.call(namespace, "GetDefaultFolder", 10 /* OlDefaultFolders.olFolderContacts */).toDispatch();
 
-            // Iterate through the emails
-            Iterator<Variant> emailIterator = new Variant(items).toDispatch().iterator();
-            while (emailIterator.hasNext()) {
-                Dispatch email = emailIterator.next().toDispatch();
+            // Get the items (contacts) in the Contacts folder
+            Dispatch items = Dispatch.get(contactsFolder, "Items").toDispatch();
 
-                // Get the email sender's address
-                String senderAddress = Dispatch.get(email, "SenderEmailAddress").toString();
+            // Get the count of contacts
+            int count = Dispatch.get(items, "Count").getInt();
 
-                // Print the sender's email address
-                System.out.println("Sender Email Address: " + senderAddress);
+            // Iterate through the contacts and search for the specified contact
+            for (int i = 1; i <= count; i++) {
+                Dispatch contact = Dispatch.call(items, "Item", i).toDispatch();
+                String displayName = Dispatch.get(contact, "FullName").toString();
+
+                if (displayName.equalsIgnoreCase(contactName)) {
+                    System.out.println("Contact found: " + displayName);
+
+                    // You can retrieve more details about the contact as needed
+                    // For example: String email = Dispatch.get(contact, "Email1Address").toString();
+                    // System.out.println("Email: " + email);
+
+                    break; // Exit the loop if the contact is found
+                }
             }
 
             // Release COM objects
-            emailIterator = null;
-            inbox.safeRelease();
-            namespace.safeRelease();
-            outlook.safeRelease();
+            outlookApp.safeRelease();
+            Dispatch.call(items, "Release");
+            Dispatch.call(contactsFolder, "Release");
+            Dispatch.call(namespace, "Release");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
 
-
-dependencies {
-    implementation group: 'net.sf.jacob-project', name: 'jacob', version: '1.20'
-    implementation group: 'commons-lang', name: 'commons-lang', version: '2.6'
-}
